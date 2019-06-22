@@ -1,0 +1,860 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "defaultValue": "vh-test-lp",
+      "type": "string"
+    },
+    "LogicAppLocation": {
+      "type": "string",
+      "minLength": 1,
+      "allowedValues": [
+        "[resourceGroup().location]"
+      ],
+      "defaultValue": "[resourceGroup().location]"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('LogicAppLocation')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Compose_3": {
+              "type": "Compose",
+              "inputs": "@concat()",
+              "runAfter": {
+                "ForEach": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "ForEach": {
+              "type": "Foreach",
+              "foreach": "@actionBody('ParseJson').league.standard",
+              "actions": {
+                "Condition": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@item().yearsPro",
+                          "0"
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Compose": {
+                      "type": "Compose",
+                      "inputs": "@items('ForEach')",
+                      "runAfter": {}
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "runAfter": {
+                "ParseJSON": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "HTTP": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "http://data.nba.net/10s/prod/v1/2018/players.json"
+              },
+              "runAfter": {}
+            },
+            "ParseJSON": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP')",
+                "schema": {
+                  "properties": {
+                    "_internal": {
+                      "properties": {
+                        "consolidatedDomKey": {
+                          "type": "string"
+                        },
+                        "endToEndTimeMillis": {
+                          "type": "string"
+                        },
+                        "igorPath": {
+                          "type": "string"
+                        },
+                        "pubDateTime": {
+                          "type": "string"
+                        },
+                        "xslt": {
+                          "type": "string"
+                        },
+                        "xsltCompileTimeMillis": {
+                          "type": "string"
+                        },
+                        "xsltForceRecompile": {
+                          "type": "string"
+                        },
+                        "xsltInCache": {
+                          "type": "string"
+                        },
+                        "xsltTransformTimeMillis": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "league": {
+                      "properties": {
+                        "africa": {
+                          "items": {
+                            "properties": {
+                              "collegeName": {
+                                "type": "string"
+                              },
+                              "country": {
+                                "type": "string"
+                              },
+                              "dateOfBirthUTC": {
+                                "type": "string"
+                              },
+                              "draft": {
+                                "properties": {
+                                  "pickNum": {
+                                    "type": "string"
+                                  },
+                                  "roundNum": {
+                                    "type": "string"
+                                  },
+                                  "seasonYear": {
+                                    "type": "string"
+                                  },
+                                  "teamId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "heightFeet": {
+                                "type": "string"
+                              },
+                              "heightInches": {
+                                "type": "string"
+                              },
+                              "heightMeters": {
+                                "type": "string"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "jersey": {
+                                "type": "string"
+                              },
+                              "lastAffiliation": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "nbaDebutYear": {
+                                "type": "string"
+                              },
+                              "personId": {
+                                "type": "string"
+                              },
+                              "pos": {
+                                "type": "string"
+                              },
+                              "teamId": {
+                                "type": "string"
+                              },
+                              "teamSitesOnly": {
+                                "properties": {
+                                  "displayAffiliation": {
+                                    "type": "string"
+                                  },
+                                  "freeAgentCode": {
+                                    "type": "string"
+                                  },
+                                  "playerCode": {
+                                    "type": "string"
+                                  },
+                                  "posFull": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "teams": {
+                                "items": {
+                                  "properties": {
+                                    "seasonEnd": {
+                                      "type": "string"
+                                    },
+                                    "seasonStart": {
+                                      "type": "string"
+                                    },
+                                    "teamId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "teamId",
+                                    "seasonStart",
+                                    "seasonEnd"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "temporaryDisplayName": {
+                                "type": "string"
+                              },
+                              "weightKilograms": {
+                                "type": "string"
+                              },
+                              "weightPounds": {
+                                "type": "string"
+                              },
+                              "yearsPro": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "firstName",
+                              "lastName",
+                              "temporaryDisplayName",
+                              "personId",
+                              "teamId",
+                              "jersey",
+                              "isActive",
+                              "pos",
+                              "heightFeet",
+                              "heightInches",
+                              "heightMeters",
+                              "weightPounds",
+                              "weightKilograms",
+                              "dateOfBirthUTC",
+                              "teamSitesOnly",
+                              "teams",
+                              "draft",
+                              "nbaDebutYear",
+                              "yearsPro",
+                              "collegeName",
+                              "lastAffiliation",
+                              "country"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "sacramento": {
+                          "items": {
+                            "properties": {
+                              "collegeName": {
+                                "type": "string"
+                              },
+                              "country": {
+                                "type": "string"
+                              },
+                              "dateOfBirthUTC": {
+                                "type": "string"
+                              },
+                              "draft": {
+                                "properties": {
+                                  "pickNum": {
+                                    "type": "string"
+                                  },
+                                  "roundNum": {
+                                    "type": "string"
+                                  },
+                                  "seasonYear": {
+                                    "type": "string"
+                                  },
+                                  "teamId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "heightFeet": {
+                                "type": "string"
+                              },
+                              "heightInches": {
+                                "type": "string"
+                              },
+                              "heightMeters": {
+                                "type": "string"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "isallStar": {
+                                "type": "boolean"
+                              },
+                              "jersey": {
+                                "type": "string"
+                              },
+                              "lastAffiliation": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "nbaDebutYear": {
+                                "type": "string"
+                              },
+                              "personId": {
+                                "type": "string"
+                              },
+                              "pos": {
+                                "type": "string"
+                              },
+                              "teamId": {
+                                "type": "string"
+                              },
+                              "teamSitesOnly": {
+                                "properties": {
+                                  "displayAffiliation": {
+                                    "type": "string"
+                                  },
+                                  "freeAgentCode": {
+                                    "type": "string"
+                                  },
+                                  "playerCode": {
+                                    "type": "string"
+                                  },
+                                  "posFull": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "teams": {
+                                "items": {
+                                  "properties": {
+                                    "seasonEnd": {
+                                      "type": "string"
+                                    },
+                                    "seasonStart": {
+                                      "type": "string"
+                                    },
+                                    "teamId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "teamId",
+                                    "seasonStart",
+                                    "seasonEnd"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "temporaryDisplayName": {
+                                "type": "string"
+                              },
+                              "weightKilograms": {
+                                "type": "string"
+                              },
+                              "weightPounds": {
+                                "type": "string"
+                              },
+                              "yearsPro": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "firstName",
+                              "lastName",
+                              "personId",
+                              "teamId",
+                              "jersey",
+                              "isActive",
+                              "pos",
+                              "heightFeet",
+                              "heightInches",
+                              "heightMeters",
+                              "weightPounds",
+                              "weightKilograms",
+                              "dateOfBirthUTC",
+                              "teams",
+                              "draft",
+                              "nbaDebutYear",
+                              "yearsPro",
+                              "collegeName",
+                              "lastAffiliation",
+                              "country"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "standard": {
+                          "items": {
+                            "properties": {
+                              "collegeName": {
+                                "type": "string"
+                              },
+                              "country": {
+                                "type": "string"
+                              },
+                              "dateOfBirthUTC": {
+                                "type": "string"
+                              },
+                              "draft": {
+                                "properties": {
+                                  "pickNum": {
+                                    "type": "string"
+                                  },
+                                  "roundNum": {
+                                    "type": "string"
+                                  },
+                                  "seasonYear": {
+                                    "type": "string"
+                                  },
+                                  "teamId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "heightFeet": {
+                                "type": "string"
+                              },
+                              "heightInches": {
+                                "type": "string"
+                              },
+                              "heightMeters": {
+                                "type": "string"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "isallStar": {
+                                "type": "boolean"
+                              },
+                              "jersey": {
+                                "type": "string"
+                              },
+                              "lastAffiliation": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "nbaDebutYear": {
+                                "type": "string"
+                              },
+                              "personId": {
+                                "type": "string"
+                              },
+                              "pos": {
+                                "type": "string"
+                              },
+                              "teamId": {
+                                "type": "string"
+                              },
+                              "teamSitesOnly": {
+                                "properties": {
+                                  "displayAffiliation": {
+                                    "type": "string"
+                                  },
+                                  "freeAgentCode": {
+                                    "type": "string"
+                                  },
+                                  "playerCode": {
+                                    "type": "string"
+                                  },
+                                  "posFull": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "teams": {
+                                "items": {
+                                  "properties": {
+                                    "seasonEnd": {
+                                      "type": "string"
+                                    },
+                                    "seasonStart": {
+                                      "type": "string"
+                                    },
+                                    "teamId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "teamId",
+                                    "seasonStart",
+                                    "seasonEnd"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "temporaryDisplayName": {
+                                "type": "string"
+                              },
+                              "weightKilograms": {
+                                "type": "string"
+                              },
+                              "weightPounds": {
+                                "type": "string"
+                              },
+                              "yearsPro": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "firstName",
+                              "lastName",
+                              "personId",
+                              "teamId",
+                              "jersey",
+                              "isActive",
+                              "pos",
+                              "heightFeet",
+                              "heightInches",
+                              "heightMeters",
+                              "weightPounds",
+                              "weightKilograms",
+                              "dateOfBirthUTC",
+                              "teams",
+                              "draft",
+                              "nbaDebutYear",
+                              "yearsPro",
+                              "collegeName",
+                              "lastAffiliation",
+                              "country"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "utah": {
+                          "items": {
+                            "properties": {
+                              "collegeName": {
+                                "type": "string"
+                              },
+                              "country": {
+                                "type": "string"
+                              },
+                              "dateOfBirthUTC": {
+                                "type": "string"
+                              },
+                              "draft": {
+                                "properties": {
+                                  "pickNum": {
+                                    "type": "string"
+                                  },
+                                  "roundNum": {
+                                    "type": "string"
+                                  },
+                                  "seasonYear": {
+                                    "type": "string"
+                                  },
+                                  "teamId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "heightFeet": {
+                                "type": "string"
+                              },
+                              "heightInches": {
+                                "type": "string"
+                              },
+                              "heightMeters": {
+                                "type": "string"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "isallStar": {
+                                "type": "boolean"
+                              },
+                              "jersey": {
+                                "type": "string"
+                              },
+                              "lastAffiliation": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "nbaDebutYear": {
+                                "type": "string"
+                              },
+                              "personId": {
+                                "type": "string"
+                              },
+                              "pos": {
+                                "type": "string"
+                              },
+                              "teamId": {
+                                "type": "string"
+                              },
+                              "teamSitesOnly": {
+                                "properties": {
+                                  "displayAffiliation": {
+                                    "type": "string"
+                                  },
+                                  "freeAgentCode": {
+                                    "type": "string"
+                                  },
+                                  "playerCode": {
+                                    "type": "string"
+                                  },
+                                  "posFull": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "teams": {
+                                "type": "array"
+                              },
+                              "temporaryDisplayName": {
+                                "type": "string"
+                              },
+                              "weightKilograms": {
+                                "type": "string"
+                              },
+                              "weightPounds": {
+                                "type": "string"
+                              },
+                              "yearsPro": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "firstName",
+                              "lastName",
+                              "personId",
+                              "teamId",
+                              "jersey",
+                              "isActive",
+                              "pos",
+                              "heightFeet",
+                              "heightInches",
+                              "heightMeters",
+                              "weightPounds",
+                              "weightKilograms",
+                              "dateOfBirthUTC",
+                              "teams",
+                              "draft",
+                              "nbaDebutYear",
+                              "yearsPro",
+                              "collegeName",
+                              "lastAffiliation",
+                              "country"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "vegas": {
+                          "items": {
+                            "properties": {
+                              "collegeName": {
+                                "type": "string"
+                              },
+                              "country": {
+                                "type": "string"
+                              },
+                              "dateOfBirthUTC": {
+                                "type": "string"
+                              },
+                              "draft": {
+                                "properties": {
+                                  "pickNum": {
+                                    "type": "string"
+                                  },
+                                  "roundNum": {
+                                    "type": "string"
+                                  },
+                                  "seasonYear": {
+                                    "type": "string"
+                                  },
+                                  "teamId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "heightFeet": {
+                                "type": "string"
+                              },
+                              "heightInches": {
+                                "type": "string"
+                              },
+                              "heightMeters": {
+                                "type": "string"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "isallStar": {
+                                "type": "boolean"
+                              },
+                              "jersey": {
+                                "type": "string"
+                              },
+                              "lastAffiliation": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "nbaDebutYear": {
+                                "type": "string"
+                              },
+                              "personId": {
+                                "type": "string"
+                              },
+                              "pos": {
+                                "type": "string"
+                              },
+                              "teamId": {
+                                "type": "string"
+                              },
+                              "teamSitesOnly": {
+                                "properties": {
+                                  "displayAffiliation": {
+                                    "type": "string"
+                                  },
+                                  "freeAgentCode": {
+                                    "type": "string"
+                                  },
+                                  "playerCode": {
+                                    "type": "string"
+                                  },
+                                  "posFull": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "teams": {
+                                "items": {
+                                  "properties": {
+                                    "seasonEnd": {
+                                      "type": "string"
+                                    },
+                                    "seasonStart": {
+                                      "type": "string"
+                                    },
+                                    "teamId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "teamId",
+                                    "seasonStart",
+                                    "seasonEnd"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "temporaryDisplayName": {
+                                "type": "string"
+                              },
+                              "weightKilograms": {
+                                "type": "string"
+                              },
+                              "weightPounds": {
+                                "type": "string"
+                              },
+                              "yearsPro": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "firstName",
+                              "lastName",
+                              "personId",
+                              "teamId",
+                              "jersey",
+                              "isActive",
+                              "pos",
+                              "heightFeet",
+                              "heightInches",
+                              "heightMeters",
+                              "weightPounds",
+                              "weightKilograms",
+                              "dateOfBirthUTC",
+                              "teams",
+                              "draft",
+                              "nbaDebutYear",
+                              "yearsPro",
+                              "collegeName",
+                              "lastAffiliation",
+                              "country"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "HTTP": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "triggers": {
+            "Recurrence": {
+              "type": "Recurrence",
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1
+              }
+            }
+          }
+        }
+      },
+      "tags": {
+        "displayName": "LogicApp"
+      }
+    }
+  ]
+}
