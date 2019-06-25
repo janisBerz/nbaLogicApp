@@ -11,6 +11,14 @@
     "azureGmailConnectorName": {
       "type": "string"
     },
+    "yearsPro": {
+      "type": "string",
+      "defaultValue": "0"
+    },
+    "nbaPlayersUri": {
+      "type": "string",
+      "defaultValue": "http://data.nba.net/10s/prod/v1/2018/players.json"
+    },
     "LogicAppLocation": {
       "type": "string",
       "minLength": 1,
@@ -67,7 +75,7 @@
                       {
                         "equals": [
                           "@item().yearsPro",
-                          "0"
+                          "[parameters('yearsPro')]"
                         ]
                       }
                     ]
@@ -149,7 +157,7 @@
               "type": "Http",
               "inputs": {
                 "method": "GET",
-                "uri": "http://data.nba.net/10s/prod/v1/2018/players.json"
+                "uri": "[parameters('nbaPlayersUri')]"
               },
               "runAfter": {
                 "Initialize_variable_2": [
