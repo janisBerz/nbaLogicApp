@@ -10,7 +10,31 @@
       "type": "string",
       "minLength": 1,
       "allowedValues": [
-        "[resourceGroup().location]"
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2"
       ],
       "defaultValue": "[resourceGroup().location]"
     }
@@ -27,15 +51,6 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
-            "Compose_3": {
-              "type": "Compose",
-              "inputs": "@concat()",
-              "runAfter": {
-                "ForEach": [
-                  "Succeeded"
-                ]
-              }
-            },
             "ForEach": {
               "type": "Foreach",
               "foreach": "@actionBody('ParseJson').league.standard",
@@ -53,9 +68,26 @@
                     ]
                   },
                   "actions": {
-                    "Compose": {
+                    "ComposePlayerCard": {
                       "type": "Compose",
-                      "inputs": "@items('ForEach')",
+                      "inputs": {
+                        "firstName": "@items('ForEach')['firstName']",
+                        "heightMeters": "@items('ForEach')['heightMeters']",
+                        "lastName": "@items('ForEach')['lastName']",
+                        "plusMinus": "@actionBody('HTTPGetUserProfile').league.standard.stats.careerSummary.plusMinus"
+                      },
+                      "runAfter": {
+                        "HTTPGetUserProfile": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "HTTPGetUserProfile": {
+                      "type": "Http",
+                      "inputs": {
+                        "method": "GET",
+                        "uri": "http://data.nba.net/10s/prod/v1/2018/players/@{items('ForEach')['personId']}_profile.json"
+                      },
                       "runAfter": {}
                     }
                   },
@@ -840,7 +872,7 @@
               }
             }
           },
-          "contentVersion": "1.0.0.0",
+          "parameters": {},
           "triggers": {
             "Recurrence": {
               "type": "Recurrence",
@@ -849,8 +881,10 @@
                 "interval": 1
               }
             }
-          }
-        }
+          },
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {}
       },
       "tags": {
         "displayName": "LogicApp"
