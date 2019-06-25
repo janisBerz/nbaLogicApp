@@ -3,7 +3,12 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "logicAppName": {
-      "defaultValue": "vh-test-lp",
+      "type": "string"
+    },
+    "azureBlobApiConnectorName": {
+      "type": "string"
+    },
+    "azureGmailConnectorName": {
       "type": "string"
     },
     "LogicAppLocation": {
@@ -89,6 +94,18 @@
                         "uri": "http://data.nba.net/10s/prod/v1/2018/players/@{items('ForEach')['personId']}_profile.json"
                       },
                       "runAfter": {}
+                    },
+                    "Append_to_array_variable": {
+                      "type": "AppendToArrayVariable",
+                      "inputs": {
+                        "name": "playersYearsPro",
+                        "value": "@outputs('ComposePlayerCard')"
+                      },
+                      "runAfter": {
+                        "ComposePlayerCard": [
+                          "Succeeded"
+                        ]
+                      }
                     }
                   },
                   "runAfter": {}
@@ -100,13 +117,45 @@
                 ]
               }
             },
+            "Create_blob_2": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": "@variables('playersYearsPro')",
+                "path": "/datasets/default/files",
+                "queries": {
+                  "folderPath": "nba",
+                  "name": "@{variables('currentRunTimeUTC')}",
+                  "queryParametersSingleEncoded": true
+                }
+              },
+              "runAfter": {
+                "ForEach": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
             "HTTP": {
               "type": "Http",
               "inputs": {
                 "method": "GET",
                 "uri": "http://data.nba.net/10s/prod/v1/2018/players.json"
               },
-              "runAfter": {}
+              "runAfter": {
+                "Initialize_variable_2": [
+                  "Succeeded"
+                ]
+              }
             },
             "ParseJSON": {
               "type": "ParseJson",
@@ -866,13 +915,92 @@
                 }
               },
               "runAfter": {
+                "Initialize_variable": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "playersYearsPro",
+                    "type": "Array"
+                  }
+                ]
+              },
+              "runAfter": {
                 "HTTP": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Create_SAS_URI_by_path": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": {
+                  "Permissions": "Read"
+                },
+                "path": "/datasets/default/CreateSharedLinkByPath",
+                "queries": {
+                  "path": "/nba/@{variables('currentRunTimeUTC')}"
+                }
+              },
+              "runAfter": {
+                "Create_blob_2": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialize_variable_2": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "currentRunTimeUTC",
+                    "type": "String",
+                    "value": "@{utcNow()}"
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
+            "Send_email": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['gmail']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": {
+                  "To": "makaronss@gmail.com",
+                  "Subject": "NBA noobs @{variables('currentRunTimeUTC')}",
+                  "Body": "@body('Create_SAS_URI_by_path')?['WebUrl']"
+                },
+                "path": "/Mail"
+              },
+              "runAfter": {
+                "Create_SAS_URI_by_path": [
                   "Succeeded"
                 ]
               }
             }
           },
-          "parameters": {},
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
           "triggers": {
             "Recurrence": {
               "type": "Recurrence",
@@ -884,7 +1012,22 @@
           },
           "contentVersion": "1.0.0.0"
         },
-        "parameters": {}
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azureblob": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', parameters('azureBlobApiConnectorName'))]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureBlobApiConnectorName'))]",
+                "connectionName": "azureblob"
+              },
+              "gmail": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('LogicAppLocation'), '/managedApis/', parameters('azureGmailConnectorName'))]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureGmailConnectorName'))]",
+                "connectionName": "gmail"
+              }
+            }
+          }
+        }
       },
       "tags": {
         "displayName": "LogicApp"

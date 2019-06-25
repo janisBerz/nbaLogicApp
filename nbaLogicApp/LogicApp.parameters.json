@@ -4,6 +4,12 @@
   "parameters": {
     "logicAppName": {
       "value": "nbaLogicApp"
+    },
+    "azureBlobApiConnectorName": {
+      "value": "azureblob"
+    },
+    "azureGmailConnectorName": {
+      "value": "gmail"
     }
   }
 }
